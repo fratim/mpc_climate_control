@@ -15,7 +15,7 @@ function param = compute_controller_base_parameters
     Ac(3,1) = 0; 
     Ac(3,2) = truck.a23/truck.m3; 
     Ac(3,3) = -1/truck.m3*(truck.a23+truck.a3o); 
-    A =; exp(Ac*Ts);  %eye(3) - Ts*Ac
+    A = exp(Ac*Ts);  %eye(3) - Ts*Ac
     
     Bc = zeros(3,2); 
     Bc(1,1) = 1/truck.m1; 
@@ -34,8 +34,9 @@ function param = compute_controller_base_parameters
     T_sp = zeros(3,1); 
     T_sp(1) = -20; 
     T_sp(2) = -0.25; 
-    A_ = eye(3) - A;
-    x  = inv([B,-A_(:,3)])*(A_(:,1:2)*T_sp(1:2) - Bd*d); 
+    %A_ = eye(3) - A;
+    %x  = inv([B,-A_(:,3)])*(A_(:,1:2)*T_sp(1:2) - Bd*d); 
+    x = -inv([Bc,Ac(:,3)])*(Ac(:,1:2)*T_sp(1:2) + Bcd*d); 
     T_sp(3) = x(3);
     p_sp = x(1:2); 
     
