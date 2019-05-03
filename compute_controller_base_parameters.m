@@ -33,7 +33,7 @@ function param = compute_controller_base_parameters
     % (3) set point computation. 
     T_sp = zeros(3,1); 
     T_sp(1) = -20; 
-    T_sp(2) = -0.25; 
+    T_sp(2) = 0.25; 
     %A_ = eye(3) - A;
     %x  = inv([B,-A_(:,3)])*(A_(:,1:2)*T_sp(1:2) - Bd*d); 
     x = -inv([Bc,Ac(:,3)])*(Ac(:,1:2)*T_sp(1:2) + Bcd*d); 
@@ -49,14 +49,14 @@ function param = compute_controller_base_parameters
     Xcons = [Tcons(1,:)-T_sp(1);Tcons(2,:)-T_sp(2);Tcons(3,:)-T_sp(3)]; 
     
     % (5) LQR cost function
-    Q = ...
-    R = ...
+    Q = diag([1e3,1e3,0]); %state weight. 
+    R = eye(2); %input weight.  
     
     % put everything together
-    param.A = Ac;
+    param.A = A;
     param.B = B;
     param.Q = Q;
-    param.R = R;
+    param.R = R; 
     param.T_sp = T_sp;
     param.p_sp = p_sp;
     param.Ucons = Ucons;
