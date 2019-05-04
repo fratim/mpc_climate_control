@@ -15,20 +15,20 @@ function param = compute_controller_base_parameters
     Ac(3,1) = 0; 
     Ac(3,2) = truck.a23/truck.m3; 
     Ac(3,3) = -1/truck.m3*(truck.a23+truck.a3o); 
-    A = exp(Ac*Ts);  %eye(3) - Ts*Ac
+    A = expm(Ac*Ts);  %eye(3) - Ts*Ac
     
     Bc = zeros(3,2); 
     Bc(1,1) = 1/truck.m1; 
     Bc(2,2) = 1/truck.m2; 
-    B = inv(Ac)*(A-eye(3))*Bc; %Ts*Bc;
+    B = inv(Ac)*(A-eye(3))*Bc; %Ts*Bc; %asdf warum?
     
-    Bcd = zeros(3,2); 
+    Bcd = zeros(3,3); 
     Bcd(1,1) = 1/truck.m1; 
     Bcd(2,2) = 1/truck.m2; 
     Bcd(3,3) = 1/truck.m3; 
-    Bd = inv(Ac)*(A-eye(3))*Bcd; %Ts*Bcd;
+    Bd = inv(Ac)*(A-eye(3))*Bcd; %Ts*Bcd; %asdf warum?
     
-    d = [truck.a1o;truck.a2o;truck.a3o]*truck.To + truck.w; 
+    d = [truck.a1o;truck.a2o;truck.a3o]*truck.To + truck.w;
     
     % (3) set point computation. 
     T_sp = zeros(3,1); 
@@ -36,7 +36,7 @@ function param = compute_controller_base_parameters
     T_sp(2) = 0.25; 
     %A_ = eye(3) - A;
     %x  = inv([B,-A_(:,3)])*(A_(:,1:2)*T_sp(1:2) - Bd*d); 
-    x = -inv([Bc,Ac(:,3)])*(Ac(:,1:2)*T_sp(1:2) + Bcd*d); 
+    x = -inv([Bc,Ac(:,3)])*(Ac(:,1:2)*T_sp(1:2) + Bcd*d); %asdf
     T_sp(3) = x(3);
     p_sp = x(1:2); 
     
@@ -50,7 +50,7 @@ function param = compute_controller_base_parameters
     
     % (5) LQR cost function
     Q = diag([1e3,1e3,0]); %state weight. 
-    R = eye(2); %input weight.  
+    R = diag([1e-4,1e-4]); %input weight.  
     
     % put everything together
     param.A = A;

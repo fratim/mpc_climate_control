@@ -17,7 +17,6 @@ T0 = system_params.T_sp + [3;1;0];
 
 %% LQR simulation - Scenario II. 
 clear controller_lqr; 
-x0 = [3;1;0]; 
 T0 = system_params.T_sp + [-1.0;-0.1;-4.5]; 
 [T, p] = simulate_truck(T0, @controller_lqr,scen2);
 
