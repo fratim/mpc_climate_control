@@ -8,7 +8,6 @@
 function p = controller_mpc_1(T)
 % controller variables
 persistent param yalmip_optimizer
-
 % initialize controller, if not done already
 if isempty(param)
     [param, yalmip_optimizer] = init();
@@ -16,7 +15,7 @@ end
 % normalize state. 
 x = T - param.T_sp; 
 % compute control action.
-[u_mpc,errorcode] = yalmip_optimizer(x);
+[u_mpc,errorcode] = yalmip_optimizer(x); 
 if (errorcode ~= 0)
       warning('MPC infeasible');
 end
@@ -42,8 +41,7 @@ Xcons = param.Xcons;
 U = sdpvar(repmat(nu,1,N-1),repmat(1,1,N-1),'full'); %#ok<REPMAT>
 X = sdpvar(repmat(nx,1,N),repmat(1,1,N),'full'); %#ok<REPMAT>
 objective = 0;
-constraints = [Ucons(:,1)<=U{1}<=Ucons(:,2)];
-X{2} = A*X{1} + B*U{1}; 
+constraints = [];
 for k = 1:N-1  
     X{k+1} = A*X{k} + B*U{k};  
     constraints = [constraints; 
@@ -51,8 +49,8 @@ for k = 1:N-1
                    Xcons(:,1)<=X{k}<=Xcons(:,2)];  %#ok<AGROW>
     objective = objective + X{k}'*Q*X{k} + U{k}'*R*U{k};
 end
-objective = objective + 0;
+objective = objective + X{N}'*Q*X{N};
 % initialize (yalmip) mpc problem. 
-ops = sdpsettings('verbose',0,'solver','quadprog');
+ops = sdpsettings('verbose',2,'solver','quadprog');
 yalmip_optimizer = optimizer(constraints,objective,ops,[],U);
 end
