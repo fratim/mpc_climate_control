@@ -19,9 +19,8 @@ x = T - param.T_sp;
 if (errorcode ~= 0)
       warning('MPC infeasible');
 end
-% denormalize control input. 
-p = u_mpc + param.p_sp;
-disp(["mpc - new step", num2str(p)]); 
+% denormalize control input.
+p = u_mpc(:,1) + param.p_sp;
 end
 
 function [param, yalmip_optimizer] = init()
@@ -53,6 +52,6 @@ for k = 2:N-1
 end
 objective = objective + X{N}'*Q*X{N};
 % initialize (yalmip) mpc problem. 
-ops = sdpsettings('verbose',2,'solver','quadprog');
-yalmip_optimizer = optimizer(constraints,objective,ops,[],U);
+ops = sdpsettings('verbose',0,'solver','quadprog');
+yalmip_optimizer = optimizer(constraints,objective,ops,X{1},[U{:}]);
 end

@@ -1,6 +1,6 @@
-% BRIEF:
-%   Controller function template. This function can be freely modified but
-%   input and output dimension MUST NOT be changed.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MPC 2 controller
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INPUT:
 %   T: Measured system temperatures, dimension (3,1)
 % OUTPUT:
@@ -8,43 +8,56 @@
 function p = controller_mpc_2(T)
 % controller variables
 persistent param yalmip_optimizer
-
 % initialize controller, if not done already
 if isempty(param)
     [param, yalmip_optimizer] = init();
 end
-
-%% evaluate control action by solving MPC problem, e.g.
-% [u_mpc,errorcode] = yalmip_optimizer(...);
-% if (errorcode ~= 0)
-%       warning('MPC infeasible');
-% end
-% p = ...;
+% normalize state. 
+x = T - param.T_sp; 
+% compute control action.
+[u_mpc,errorcode] = yalmip_optimizer(x); 
+if (errorcode ~= 0)
+      warning('MPC infeasible');
+end
+% denormalize control input.
+p = u_mpc(:,1) + param.p_sp;
 end
 
 function [param, yalmip_optimizer] = init()
 % initializes the controller on first call and returns parameters and
 % Yalmip optimizer object
-
-param = compute_controller_base_parameters; % get basic controller parameters
-
-%% implement your MPC using Yalmip here, e.g.
-% N = 30;
-% nx = size(param.A,1);
-% nu = size(param.B,2);
-%
-% U = sdpvar(repmat(nu,1,N-1),repmat(1,1,N-1),'full');
-% X = sdpvar(repmat(nx,1,N),repmat(1,1,N),'full');
-%
-% objective = 0;
-% constraints = [...];
-% for k = 1:N-1
-%   constraints = [constraints, ...];
-%   objective = objective + ... ;
-% end
-% objective = objective + ... ;
-%
-% ops = sdpsettings('verbose',0,'solver','quadprog');
-% fprintf('JMPC_dummy = %f',value(objective));
-% yalmip_optimizer = optimizer(constraints,objective,ops,... , ... );
+param = compute_controller_base_parameters;
+N = 30;
+A = param.A; 
+B = param.B; 
+Q = param.Q; 
+R = param.R; 
+nx = size(A,1);
+nu = size(B,2);
+Ucons = param.Ucons; 
+Xcons = param.Xcons; 
+% initialize objective function and constraints (state constraint in the 
+% k=0 step is not enforced due to numerical reasons). 
+U = sdpvar(repmat(nu,1,N-1),repmat(1,1,N-1),'full'); %#ok<REPMAT>
+X = sdpvar(repmat(nx,1,N),repmat(1,1,N),'full'); %#ok<REPMAT>
+X{2} = A*X{1} + B*U{1};
+constraints = [Ucons(:,1)<=U{1}<=Ucons(:,2)];
+objective =  X{1}'*Q*X{1} + U{1}'*R*U{1};
+for k = 2:N-1  
+    X{k+1} = A*X{k} + B*U{k};
+    constraints = [constraints; 
+                   Ucons(:,1)<=U{k}<=Ucons(:,2); 
+                   Xcons(:,1)<=X{k}<=Xcons(:,2)]; %#ok<AGROW>
+    objective = objective + X{k}'*Q*X{k} + U{k}'*R*U{k};
 end
+objective = objective + X{N}'*Q*X{N};
+constraints = [constraints; X{N} == 0]; 
+% initialize (yalmip) mpc problem. 
+ops = sdpsettings('verbose',0,'solver','quadprog');
+yalmip_optimizer = optimizer(constraints,objective,ops,X{1},[U{:}]);
+end
+
+% Given that x(0) is in the feasible set, initialized with x(0) the closed-
+% loop system will end up in x_30 = 0, as it is constrained to do. As can 
+% be shown from the system equation x(k+1) = Ax(k) + Bu(k) without input 
+% the system will stay at the origin (system is itself linear !). 
