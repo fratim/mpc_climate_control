@@ -10,16 +10,23 @@ load('system/parameters_scenarios.mat');
 % Load system. 
 system_params = compute_controller_base_parameters;
 
-%% LQR simulation - Scenario I. 
-clear controller_lqr; 
-T0 = system_params.T_sp + [3;1;0];  
-[T, p] = simulate_truck(T0, @controller_lqr,scen1);
+% Initial conditions. 
+T0_1 = system_params.T_sp + [3;1;0]; 
+T0_2 = system_params.T_sp + [-1.0;-0.1;-4.5]; 
 
-%% LQR simulation - Scenario II. 
+%% LQR simulation.
 clear controller_lqr; 
-x0 = [3;1;0]; 
-T0 = system_params.T_sp + [-1.0;-0.1;-4.5]; 
-[T, p] = simulate_truck(T0, @controller_lqr,scen2);
+[T, p] = simulate_truck(T0_1, @controller_lqr,scen1);
+print('outs/lqr_scen1_to1','-dpng')
+
+clear controller_lqr; 
+[T, p] = simulate_truck(T0_2, @controller_lqr,scen2);
+print('outs/lqr_scen2_to2','-dpng')
 
 %% LQR - Invariant set. 
 [A_x, b_x] = compute_X_LQR(); 
+
+%% MPC1 simulation - Scenario I. 
+clear yalmip_optimizer; 
+[T, p] = simulate_truck(T0_1, @controller_mpc_1,scen1);
+print('outs/mpc_1_scen1_to1','-dpng')
