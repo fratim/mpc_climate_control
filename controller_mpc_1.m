@@ -21,6 +21,7 @@ if (errorcode ~= 0)
 end
 % denormalize control input. 
 p = u_mpc + param.p_sp;
+disp(["mpc - new step", num2str(p)]); 
 end
 
 function [param, yalmip_optimizer] = init()
@@ -40,13 +41,14 @@ Xcons = param.Xcons;
 % k=0 step is not enforced due to numerical reasons). 
 U = sdpvar(repmat(nu,1,N-1),repmat(1,1,N-1),'full'); %#ok<REPMAT>
 X = sdpvar(repmat(nx,1,N),repmat(1,1,N),'full'); %#ok<REPMAT>
-objective = 0;
-constraints = [];
-for k = 1:N-1  
-    X{k+1} = A*X{k} + B*U{k};  
+X{2} = A*X{1} + B*U{1};
+constraints = [Ucons(:,1)<=U{1}<=Ucons(:,2)];
+objective =  X{1}'*Q*X{1} + U{1}'*R*U{1};
+for k = 2:N-1  
+    X{k+1} = A*X{k} + B*U{k};
     constraints = [constraints; 
                    Ucons(:,1)<=U{k}<=Ucons(:,2); 
-                   Xcons(:,1)<=X{k}<=Xcons(:,2)];  %#ok<AGROW>
+                   Xcons(:,1)<=X{k}<=Xcons(:,2)]; %#ok<AGROW>
     objective = objective + X{k}'*Q*X{k} + U{k}'*R*U{k};
 end
 objective = objective + X{N}'*Q*X{N};
