@@ -63,7 +63,6 @@ end
 P_inf = zeros(3);
 objective = objective + X{N}'*P_inf*X{N};
 param.P_inf = P_inf; 
-constraints = [constraints; A_x*X{N}<b_x];
 % initialize (yalmip) mpc problem. 
 ops = sdpsettings('verbose',0,'solver','quadprog');
 yalmip_optimizer = optimizer(constraints,objective,ops,X{1},[U{:}]);

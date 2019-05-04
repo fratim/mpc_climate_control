@@ -1,32 +1,27 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% MPC 3 controller
+% MPC 1 controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INPUT:
 %   T: Measured system temperatures, dimension (3,1)
 % OUTPUT:
 %   p: Cooling power, dimension (2,1)
-function p = controller_mpc_3(T)
+function p = controller_mpc_1(T)
 % controller variables
 persistent param yalmip_optimizer
 % initialize controller, if not done already
-is_first_step = false; 
 if isempty(param)
     [param, yalmip_optimizer] = init();
-    is_first_step = true; 
 end
 % normalize state. 
 x = T - param.T_sp; 
 % compute control action.
 [u_mpc,errorcode] = yalmip_optimizer(x); 
+yalmip_optimizer.options
+fval = value(yalmip_optimizer(x))
 if (errorcode ~= 0)
       warning('MPC infeasible');
 end
-% determine cost. 
-if is_first_step
-    J = compute_mpc_cost(x, u_mpc, param.P_inf, param); 
-    disp(["J(x(0)) = ", num2str(J)]); 
-end
-% denormalize control input.
+% denormalize control input. 
 p = u_mpc(:,1) + param.p_sp;
 end
 
@@ -43,8 +38,6 @@ nx = size(A,1);
 nu = size(B,2);
 Ucons = param.Ucons; 
 Xcons = param.Xcons; 
-% compute feasibe set
-[A_x, b_x] = compute_X_LQR
 % initialize objective function and constraints (state constraint in the 
 % k=0 step is not enforced due to numerical reasons). 
 U = sdpvar(repmat(nu,1,N-1),repmat(1,1,N-1),'full'); %#ok<REPMAT>
@@ -59,12 +52,8 @@ for k = 2:N-1
                    Xcons(:,1)<=X{k}<=Xcons(:,2)]; %#ok<AGROW>
     objective = objective + X{k}'*Q*X{k} + U{k}'*R*U{k};
 end
-[~,P_inf,~] = dlqr(A,B,Q,R);
-P_inf = zeros(3);
-objective = objective + X{N}'*P_inf*X{N};
-param.P_inf = P_inf; 
-constraints = [constraints; A_x*X{N}<b_x];
+objective = objective + X{N}'*Q*X{N};
 % initialize (yalmip) mpc problem. 
-ops = sdpsettings('verbose',0,'solver','quadprog');
+ops = sdpsettings('verbose',2,'solver','quadprog');
 yalmip_optimizer = optimizer(constraints,objective,ops,X{1},[U{:}]);
 end

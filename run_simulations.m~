@@ -48,17 +48,17 @@ clear controller_mpc_2;
 %% MPC2 simulation - Scenario I2.
 disp("MPC 2 simulation - scenario: I, init: I")
 [T, p] = simulate_truck(T0_2, @controller_mpc_2,scen1);
-print('outs/mpc_2_scen1_to2','-dpng')
+print('outs/mpc_2_scen1_to1','-dpng')
 clear controller_mpc_2; 
 
 %% MPC3 simulation - Scenario I1. 
 disp("MPC 3 simulation - scenario: I, init: I")
 [T, p] = simulate_truck(T0_1, @controller_mpc_3,scen1);
-print('outs/mpc_3_scen1_to1','-dpng')
-clear controller_mpc_3; 
+print('outs/mpc_2_scen1_to1','-dpng')
+clear controller_mpc_2; 
 
 %% MPC3 simulation - Scenario I2. 
 disp("MPC 3 simulation - scenario: I, init: I")
 [T, p] = simulate_truck(T0_2, @controller_mpc_3,scen1);
-print('outs/mpc_3_scen1_to2','-dpng')
-clear controller_mpc_3; 
+print('outs/mpc_2_scen1_to1','-dpng')
+clear controller_mpc_2; 
