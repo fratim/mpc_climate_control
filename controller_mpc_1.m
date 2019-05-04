@@ -9,8 +9,10 @@ function p = controller_mpc_1(T)
 % controller variables
 persistent param yalmip_optimizer
 % initialize controller, if not done already
+is_first_step = false; 
 if isempty(param)
     [param, yalmip_optimizer] = init();
+    is_first_step = true; 
 end
 % normalize state. 
 x = T - param.T_sp; 
@@ -18,6 +20,11 @@ x = T - param.T_sp;
 [u_mpc,errorcode] = yalmip_optimizer(x); 
 if (errorcode ~= 0)
       warning('MPC infeasible');
+end
+% determine cost. 
+if is_first_step
+    J = compute_mpc_cost(x, u_mpc, param.P_inf, param); 
+    disp(["J(x(0)) = ", num2str(J)]); 
 end
 % denormalize control input.
 p = u_mpc(:,1) + param.p_sp;
@@ -50,7 +57,9 @@ for k = 2:N-1
                    Xcons(:,1)<=X{k}<=Xcons(:,2)]; %#ok<AGROW>
     objective = objective + X{k}'*Q*X{k} + U{k}'*R*U{k};
 end
-objective = objective + X{N}'*Q*X{N};
+[~,P_inf,~] = dlqr(A,B,Q,R);
+objective = objective + X{N}'*P_inf*X{N};
+param.P_inf = P_inf; 
 % initialize (yalmip) mpc problem. 
 ops = sdpsettings('verbose',0,'solver','quadprog');
 yalmip_optimizer = optimizer(constraints,objective,ops,X{1},[U{:}]);

@@ -47,7 +47,7 @@ function param = compute_controller_base_parameters
     
     % (5) LQR cost function
     Q = diag([1e3,1e3,0]); %state weight. 
-    R = diag([1e-4,1e-4]); %input weight.  
+    R = diag([1,1]); %input weight.  
     
     % put everything together
     param.A = A;
