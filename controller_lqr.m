@@ -12,11 +12,11 @@ persistent param;
 if isempty(param)
     param = init();
 end
-% normalize input. 
+% normalize state. 
 x = T - param.T_sp; 
-% compute control action
-u = param.F_inf*x;
-% denormalize input. 
+% compute control action.
+u = -param.F_inf*x;
+% denormalize control input. 
 p = u + param.p_sp; 
 end
 
@@ -26,7 +26,7 @@ A = param.A;
 B = param.B; 
 R = param.R; 
 Q = param.Q; 
-[param.F_inf,param.P_inf,~] = dlqr(A,B,Q,R,0); 
+[param.F_inf,param.P_inf,~] = dlqr(A,B,Q,R); 
 end
 
 % The infinite horizon cost under the LQR control can be obtained 

@@ -2,8 +2,7 @@
 % Simulation - Main. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Initialization. 
-clear all  %#ok<CLALL>
-close all
+clc; clear all; close all; %#ok<CLALL>
 addpath(genpath(cd));
 load('system/parameters_scenarios.mat');
 

@@ -13,12 +13,15 @@ persistent param yalmip_optimizer
 if isempty(param)
     [param, yalmip_optimizer] = init();
 end
-
-% [u_mpc,errorcode] = yalmip_optimizer(...);
-% if (errorcode ~= 0)
-%       warning('MPC infeasible');
-% end
-% p = ...;
+% normalize state. 
+x = T - param.T_sp; 
+% compute control action.
+[u_mpc,errorcode] = yalmip_optimizer(x);
+if (errorcode ~= 0)
+      warning('MPC infeasible');
+end
+% denormalize control input. 
+p = u_mpc + param.p_sp;
 end
 
 function [param, yalmip_optimizer] = init()
@@ -36,24 +39,20 @@ Ucons = param.Ucons;
 Xcons = param.Xcons; 
 % initialize objective function and constraints (state constraint in the 
 % k=0 step is not enforced due to numerical reasons). 
-U = sdpvar(repmat(nu,1,N-1),repmat(1,1,N-1),'full');
-X = sdpvar(repmat(nx,1,N),repmat(1,1,N),'full');
+U = sdpvar(repmat(nu,1,N-1),repmat(1,1,N-1),'full'); %#ok<REPMAT>
+X = sdpvar(repmat(nx,1,N),repmat(1,1,N),'full'); %#ok<REPMAT>
 objective = 0;
-constraints = [Ucons(1,1)<=U{1}(1)<=Ucons(1,2); 
-               Ucons(2,1)<=U{2}(1)<=Ucons(2,2); 
-               X{];
-for k = 1:N-1
-  constraints = [constraints; 
-                 Ucons(1,1)<=U{1}(k+1)<=Ucons(1,2); 
-                 Ucons(2,1)<=U{2}(k+1)<=Ucons(2,2); 
-                 Xcons(1,1)<=X{1}(k+1)<=Xcons(1,2); 
-                 Xcons(2,1)<=X{2}(k+1)<=Xcons(2,2); 
-                 Xcons(3,1)<=X{3}(k+1)<=Xcons(3,2)];  %#ok<AGROW>
-  objective = objective + ;
+constraints = [Ucons(:,1)<=U{1}<=Ucons(:,2)];
+X{2} = A*X{1} + B*U{1}; 
+for k = 1:N-1  
+    X{k+1} = A*X{k} + B*U{k};  
+    constraints = [constraints; 
+                   Ucons(:,1)<=U{k}<=Ucons(:,2); 
+                   Xcons(:,1)<=X{k}<=Xcons(:,2)];  %#ok<AGROW>
+    objective = objective + X{k}'*Q*X{k} + U{k}'*R*U{k};
 end
-% objective = objective + ... ;
-% % initialize (yalmip) mpc problem. 
-% ops = sdpsettings('verbose',0,'solver','quadprog');
-% fprintf('JMPC_dummy = %f',value(objective));
-% yalmip_optimizer = optimizer(constraints,objective,ops,... , ... );
+objective = objective + 0;
+% initialize (yalmip) mpc problem. 
+ops = sdpsettings('verbose',0,'solver','quadprog');
+yalmip_optimizer = optimizer(constraints,objective,ops,[],U);
 end
