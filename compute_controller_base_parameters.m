@@ -26,17 +26,17 @@ function param = compute_controller_base_parameters
     Bcd(1,1) = 1/truck.m1; 
     Bcd(2,2) = 1/truck.m2; 
     Bcd(3,3) = 1/truck.m3; 
-    Bd = inv(Ac)*(A-eye(3))*Bcd; %Ts*Bcd; %asdf warum?
-    
+
+    %Bd = inv(Ac)*(A-eye(3))*Bcd; %Ts*Bcd; %asdf warum?
     d = [truck.a1o;truck.a2o;truck.a3o]*truck.To + truck.w;
     
     % (3) set point computation. 
     T_sp = zeros(3,1); 
     T_sp(1) = -20; 
     T_sp(2) = 0.25; 
-    %A_ = eye(3) - A;
-    %x  = inv([B,-A_(:,3)])*(A_(:,1:2)*T_sp(1:2) - Bd*d); 
+
     x = -inv([Bc,Ac(:,3)])*(Ac(:,1:2)*T_sp(1:2) + Bcd*d); %asdf
+
     T_sp(3) = x(3);
     p_sp = x(1:2); 
     
